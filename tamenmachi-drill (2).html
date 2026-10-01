@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>多面待ちクイズ｜ニューロン麻雀スクール神戸校</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff4ea; --ink:#4a2f22; --sub:#8c6b5a; --card:#fffaf6;
+  --mat:#5fae7f; --mat2:#3e8a60; --red:#d2453a; --ok:#2e9a6a; --miss:#c98a12;
+  --accent:#ee8a55; --accent-ink:#ffffff; --soft:rgba(238,138,85,.16);
+  --tile:#fffdf5; --tile2:#efe9d8; --back:#d8a23a; --back2:#a8761f;
+  --line:#f2d9c6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#231914; --ink:#f7e9df; --sub:#c4a794; --card:#2e221b; --line:#4a372c;
+    --mat:#3d7a5f; --mat2:#2b5c46;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#231914; --ink:#f7e9df; --sub:#c4a794; --card:#2e221b; --line:#4a372c;
+  --mat:#3d7a5f; --mat2:#2b5c46;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+.school{display:inline-block;font-weight:700;font-size:.85rem;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:2px 12px;margin-top:6px}
+.foot{text-align:center;color:var(--sub);font-size:.8rem;padding:0 16px 24px}
+h1{font-size:1.9rem;font-weight:900;margin:8px 0 2px;letter-spacing:.04em}
+.lead{color:var(--sub);margin:0 0 18px;font-weight:500}
+.lead.one{white-space:nowrap;font-size:min(1rem,calc((100vw - 32px)/31));letter-spacing:-.01em}
+
+/* mat */
+.mat{background:radial-gradient(ellipse at 50% 30%,var(--mat),var(--mat2));
+  border-radius:18px;padding:22px 10px 26px;display:flex;justify-content:center;
+  gap:3px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+
+/* tiles */
+.tile{--w:44px;width:var(--w);height:calc(var(--w)*1.36);display:inline-flex;flex-direction:column;
+  align-items:center;justify-content:center;background:linear-gradient(180deg,var(--tile),var(--tile2));
+  border-radius:calc(var(--w)*.14);box-shadow:0 calc(var(--w)*.1) 0 var(--back),0 calc(var(--w)*.14) 0 var(--back2),0 calc(var(--w)*.2) 6px rgba(0,0,0,.25);
+  font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-weight:800;line-height:1;
+  user-select:none;-webkit-user-select:none;position:relative;flex:none;color:#1a1a1a}
+.tile .n{font-size:calc(var(--w)*.46)}
+.tile .m{font-size:calc(var(--w)*.46);color:var(--red);margin-top:calc(var(--w)*.04)}
+.mat .tile{--w:min(46px,calc((100vw - 76px)/7.3))}
+.tile.hl{outline:3px solid var(--red);outline-offset:1px}
+
+/* level select */
+.levels{display:grid;gap:12px;margin-top:22px}
+.lv{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);
+  border:2px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;color:var(--ink);font:inherit}
+.lv:hover{border-color:var(--accent)}
+.lv:focus-visible,.btn:focus-visible,.pick:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.lv b{font-size:1.25rem;font-weight:900;min-width:3.2em}
+.lv span{color:var(--sub);font-size:.95rem}
+.stars{margin-left:auto;color:var(--red);letter-spacing:2px;font-size:.9rem}
+
+/* quiz */
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px}
+.top .lvname{font-weight:900;font-size:1.05rem}
+.dots{display:flex;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.now{background:var(--accent)}
+.dot.o{background:var(--ok)} .dot.x{background:var(--red)}
+.q{font-weight:700;margin:18px 0 4px;font-size:1.05rem}
+.hint{color:var(--sub);font-size:.9rem;margin:0 0 12px}
+.picks{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;justify-items:center;padding:14px 0 10px}
+.pick{background:none;border:0;padding:0;cursor:pointer;transition:transform .12s ease}
+.pick .tile{--w:min(40px,calc((100vw - 64px)/9.4))}
+.pick.sel{transform:translateY(-12px)}
+.pick.sel .tile{outline:3px solid var(--accent);outline-offset:1px}
+.pick.ok .tile{outline:3px solid var(--ok);outline-offset:1px}
+.pick.wrong .tile{outline:3px solid var(--red);outline-offset:1px;opacity:.75}
+.pick.missed .tile{outline:3px dashed var(--miss);outline-offset:1px}
+.pick:disabled{cursor:default}
+.mark{display:block;text-align:center;font-weight:900;font-size:.8rem;margin-top:8px;min-height:1.2em}
+.mark.ok{color:var(--ok)}.mark.wrong{color:var(--red)}.mark.missed{color:var(--miss)}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font:inherit;font-weight:900;font-size:1.1rem;
+  cursor:pointer;background:var(--accent);color:var(--accent-ink);margin-top:10px}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+.verdict{font-size:1.5rem;font-weight:900;margin:14px 0 4px}
+.verdict.o{color:var(--ok)} .verdict.x{color:var(--red)}
+.exp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px}
+.exp h3{margin:0 0 8px;font-size:1rem}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 0;border-top:1px dashed var(--line)}
+.row:first-of-type{border-top:0}
+.row .lab{font-weight:700;min-width:5.6em;font-size:.92rem}
+.grp{display:inline-flex;gap:1px;padding:3px;border-radius:7px;background:var(--soft)}
+.grp.head{background:rgba(195,38,45,.12)}
+.row .tile{--w:26px}
+.note{color:var(--sub);font-size:.88rem;margin:6px 0 0}
+
+/* result */
+.score{font-size:3.4rem;font-weight:900;line-height:1;margin:18px 0 4px}
+.score small{font-size:1.2rem;color:var(--sub);font-weight:700}
+.rev{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.rev .ox{font-weight:900;width:1.4em}
+.rev .ox.o{color:var(--ok)}.rev .ox.x{color:var(--red)}
+.rev .tile{--w:22px}
+.rev .ans{width:100%;padding-left:2em;color:var(--sub);font-size:.88rem}
+@media (prefers-reduced-motion: reduce){.pick{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+<footer class="foot">ニューロン麻雀スクール神戸校</footer>
+<script>
+const K=["一","二","三","四","五","六","七","八","九"];
+const LV={1:{name:"初級",desc:"待ちが2種類",stars:"★"},2:{name:"中級",desc:"待ちが3種類",stars:"★★"},3:{name:"上級",desc:"待ちが4〜5種類",stars:"★★★"}};
+
+function meldList(c){c=c.slice();const out=[];
+  for(let i=0;i<9;i++){while(c[i]>0){
+    if(c[i]>=3){c[i]-=3;out.push([i,i,i]);}
+    else if(i<=6&&c[i+1]>0&&c[i+2]>0){c[i]--;c[i+1]--;c[i+2]--;out.push([i,i+1,i+2]);}
+    else return null;}}
+  return out;}
+function decompose(c){for(let h=0;h<9;h++){if(c[h]>=2){const d=c.slice();d[h]-=2;const m=meldList(d);if(m)return{head:h,melds:m};}}return null;}
+function analyze(c){const waits=[],dead=[];
+  for(let t=0;t<9;t++){const d=c.slice();d[t]++;if(decompose(d)){if(c[t]<4)waits.push(t);else dead.push(t);}}
+  return{waits,dead};}
+
+// build question bank
+const BANK={1:[],2:[],3:[]};
+(function gen(i,left,cur){
+  if(i===9){if(left===0){const a=analyze(cur);const n=a.waits.length;
+    const lv=n===2?1:n===3?2:n>=4?3:0; if(lv)BANK[lv].push({c:cur.slice(),...a});}return;}
+  for(let n=0;n<=Math.min(4,left);n++){cur.push(n);gen(i+1,left-n,cur);cur.pop();}
+})(0,7,[]);
+
+const T=(n,cls="")=>`<span class="tile ${cls}"><span class="n">${K[n]}</span><span class="m">萬</span></span>`;
+const handTiles=c=>{let s="";c.forEach((v,i)=>{for(let k=0;k<v;k++)s+=T(i);});return s;};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const app=document.getElementById("app");
+let S={};
+
+function home(){
+  const sample=[0,1,1,1,3,1,0,0,0];
+  app.innerHTML=`
+  <span class="school">ニューロン麻雀スクール神戸校</span>
+  <h1>多面待ちクイズ</h1>
+  <p class="lead one">アタマを1組、メンツ（3枚組）を2組にできる待ち牌を見つけよう！</p>
+  <div class="mat" aria-hidden="true">${handTiles(sample)}</div>
+  <p class="note" style="text-align:center;margin-top:10px">公開期間：2026年11月30日まで</p>
+  <div class="levels">
+   ${[1,2,3].map(l=>`<button class="lv" data-l="${l}"><b>${LV[l].name}</b><span>${LV[l].desc}・5問</span><span class="stars">${LV[l].stars}</span></button>`).join("")}
+  </div>`;
+  app.querySelectorAll(".lv").forEach(b=>b.onclick=()=>start(+b.dataset.l));
+}
+
+function start(l){
+  S={l,qs:shuffle(BANK[l].slice()).slice(0,5),i:0,sel:new Set(),done:false,res:[],t0:Date.now()};
+  quiz();
+}
+
+function quiz(){
+  const q=S.qs[S.i];
+  const dots=S.qs.map((_,k)=>{const r=S.res[k];return `<span class="dot ${r===undefined?(k===S.i?"now":""):(r.ok?"o":"x")}"></span>`}).join("");
+  let picks="";
+  for(let t=0;t<9;t++){
+    let cls="",mark="";
+    if(S.done){
+      const w=q.waits.includes(t),s=S.sel.has(t);
+      if(w&&s){cls="ok";mark="正解";} else if(!w&&s){cls="wrong";mark="×";} else if(w&&!s){cls="missed";mark="見逃し";}
+    } else if(S.sel.has(t)) cls="sel";
+    picks+=`<button class="pick ${cls}" data-t="${t}" ${S.done?"disabled":""} aria-pressed="${S.sel.has(t)}" aria-label="${K[t]}萬"><span class="tile"><span class="n">${K[t]}</span><span class="m">萬</span></span><span class="mark ${cls}">${mark}</span></button>`;
+  }
+  let body=`
+  <div class="top"><span class="lvname">${LV[S.l].name}　第${S.i+1}問</span><div class="dots">${dots}</div></div>
+  <div class="mat">${handTiles(q.c)}</div>
+  <p class="q">待ちになる牌をすべて選んでください</p>
+  <p class="hint">${S.l===1?"この手は2種類待ちです。":"タップで選択、もう一度タップで解除。"}</p>
+  <div class="picks">${picks}</div>`;
+  if(!S.done){
+    body+=`<button class="btn" id="go" ${S.sel.size?"":"disabled"}>回答する</button>`;
+  }else{
+    const r=S.res[S.i];
+    body+=`<div class="verdict ${r.ok?"o":"x"}">${r.ok?"正解！":"おしい！"}</div>
+    <div class="exp"><h3>待ちは ${q.waits.map(t=>K[t]+"萬").join("・")}（${q.waits.length}種類）</h3>
+    ${q.waits.map(t=>{const d=q.c.slice();d[t]++;const dc=decompose(d);let used=false;
+      const g=arr=>arr.map(n=>{if(n===t&&!used){used=true;return T(n,"hl");}return T(n);}).join("");
+      return `<div class="row"><span class="lab">${K[t]}萬で和了</span><span class="grp head">${g([dc.head,dc.head])}</span>${dc.melds.map(m=>`<span class="grp">${g(m)}</span>`).join("")}</div>`;}).join("")}
+    ${q.dead.length?`<p class="note">${q.dead.map(t=>K[t]+"萬").join("・")}は形としては和了れますが、手牌で4枚使っているので待ちになりません。</p>`:""}
+    <p class="note">赤い枠が引いてくる牌、赤い背景が雀頭です。</p></div>
+    <button class="btn" id="next">${S.i<4?"次の問題へ":"結果を見る"}</button>`;
+  }
+  app.innerHTML=body;
+  if(!S.done){
+    app.querySelectorAll(".pick").forEach(b=>b.onclick=()=>{const t=+b.dataset.t;S.sel.has(t)?S.sel.delete(t):S.sel.add(t);quiz();});
+    document.getElementById("go").onclick=()=>{
+      const ok=S.sel.size===q.waits.length&&q.waits.every(t=>S.sel.has(t));
+      S.res[S.i]={ok,sel:[...S.sel].sort((a,b)=>a-b)};S.done=true;quiz();};
+  }else{
+    document.getElementById("next").onclick=()=>{if(S.i<4){S.i++;S.sel=new Set();S.done=false;quiz();window.scrollTo(0,0);}else result();};
+  }
+}
+
+function result(){
+  const n=S.res.filter(r=>r.ok).length;const sec=Math.round((Date.now()-S.t0)/1000);
+  const msg=n===5?"パーフェクト！次のレベルにも挑戦してみましょう。":n>=3?"いい調子です。見逃した待ちを解説で確認しましょう。":"まずは解説の形を覚えるところから。繰り返すと見えてきます。";
+  app.innerHTML=`
+  <div class="top"><span class="lvname">${LV[S.l].name}の結果</span></div>
+  <div class="score">${n}<small> / 5問正解</small></div>
+  <p class="lead">${msg}（${Math.floor(sec/60)}分${sec%60}秒）</p>
+  <div class="exp">${S.qs.map((q,k)=>{const r=S.res[k];return `<div class="rev"><span class="ox ${r.ok?"o":"x"}">${r.ok?"○":"×"}</span>${handTiles(q.c)}
+    <span class="ans">正解：${q.waits.map(t=>K[t]).join("・")}萬${r.ok?"":`　あなた：${r.sel.map(t=>K[t]).join("・")}萬`}</span></div>`}).join("")}</div>
+  <button class="btn" id="again">${LV[S.l].name}をもう一度</button>
+  <button class="btn ghost" id="home">レベルを選び直す</button>`;
+  document.getElementById("again").onclick=()=>{start(S.l);window.scrollTo(0,0);};
+  document.getElementById("home").onclick=()=>{home();window.scrollTo(0,0);};
+}
+const END=new Date("2026-11-30T23:59:59+09:00");
+if(Date.now()>END.getTime()){
+  app.innerHTML=`<span class="school">ニューロン麻雀スクール神戸校</span>
+  <h1>多面待ちクイズ</h1>
+  <div class="exp" style="margin-top:20px"><h3>公開期間は終了しました</h3>
+  <p class="note">このクイズは2026年11月30日で公開を終了しました。ご利用ありがとうございました。</p></div>`;
+}else home();
+</script>
+</body>
+</html>
